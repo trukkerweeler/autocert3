@@ -1,0 +1,8 @@
+#xmlTable {
+    border-collapse: collapse;
+    border: 1px solid black;
+}
+
+#xmlTable td, #xmlTable th {
+    border: 1px solid black;
+}

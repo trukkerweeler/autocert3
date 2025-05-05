@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CrystalReport xmlns="urn:crystal-reports:schemas:report-detail"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:crystal-reports:schemas:report-detail http://www.businessobjects.com/products/xml/CR2008Schema.xsd">
+<ReportHeader>
+<Section SectionNumber="0">
+<Field Name="PrintDate1" FieldName="PrintDate"><FormattedValue>5/2/2025</FormattedValue><Value>2025-05-02</Value></Field>
+<Field Name="PART2" FieldName="{@PART}"><FormattedValue>1000246818       -</FormattedValue><Value>1000246818       -</Value></Field>
+</Section>
+</ReportHeader>
+<Details Level="1">
+<Section SectionNumber="0">
+<Field Name="JOB1" FieldName="{V_ITEM_HISTORY.JOB}"><FormattedValue>122018</FormattedValue><Value>122018</Value></Field>
+<Field Name="SUFFIX1" FieldName="{V_ITEM_HISTORY.SUFFIX}"><FormattedValue>003</FormattedValue><Value>003</Value></Field>
+<Field Name="PART3" FieldName="{V_ITEM_HISTORY.PART}"><FormattedValue>T61T6 3.50ODX.065</FormattedValue><Value>T61T6 3.50ODX.065</Value></Field>
+<Field Name="SERIALNUMBER1" FieldName="{V_ITEM_HISTORY.SERIAL_NUMBER}"><FormattedValue>PO: 0041450</FormattedValue><Value>PO: 0041450</Value></Field>
+<Field Name="PART1" FieldName="{@PART}"><FormattedValue>1000246818       -</FormattedValue><Value>1000246818       -</Value></Field>
+<Field Name="QUANTITY1" FieldName="{V_ITEM_HISTORY.QUANTITY}"><FormattedValue>-1.50</FormattedValue><Value>-1.50</Value></Field>
+</Section>
+</Details>
+<Details Level="1">
+<Section SectionNumber="0">
+<Field Name="JOB1" FieldName="{V_ITEM_HISTORY.JOB}"><FormattedValue>122018</FormattedValue><Value>122018</Value></Field>
+<Field Name="SUFFIX1" FieldName="{V_ITEM_HISTORY.SUFFIX}"><FormattedValue>003</FormattedValue><Value>003</Value></Field>
+<Field Name="PART3" FieldName="{V_ITEM_HISTORY.PART}"><FormattedValue>T61T6 3.50ODX.065</FormattedValue><Value>T61T6 3.50ODX.065</Value></Field>
+<Field Name="SERIALNUMBER1" FieldName="{V_ITEM_HISTORY.SERIAL_NUMBER}"><FormattedValue>PO: 0041450</FormattedValue><Value>PO: 0041450</Value></Field>
+<Field Name="PART1" FieldName="{@PART}"><FormattedValue>1000246818       -</FormattedValue><Value>1000246818       -</Value></Field>
+<Field Name="QUANTITY1" FieldName="{V_ITEM_HISTORY.QUANTITY}"><FormattedValue>-1.20</FormattedValue><Value>-1.20</Value></Field>
+</Section>
+</Details>
+<ReportFooter>
+<Section SectionNumber="0">
+</Section>
+</ReportFooter>
+</CrystalReport>

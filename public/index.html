@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/styles.css">
+    <title>Summary Cert</title>
+</head>
+<body>
+    <header>
+        <h1>Make Summary Cert</h1>
+    </header>
+    <main>
+        <div id="searchForm">
+            <label for="workOrderNo">Work Order No (WO):</label>
+            <input type="text" id="workOrderNo" name="workOrderNo" value="122198">
+            <button type="submit" id="btnSearch">Search</button>
+        </div>
+        <div id="searchResult" style="display: none;">
+            <h2>Search Result</h2>
+            <p id="resultText"></p>
+            <button id="btnClose">Close</button>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2023 My Website</p>
+    </footer>
+</body>
+<script type="module" src="/js/index.mjs"></script>
+</html>
