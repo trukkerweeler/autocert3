@@ -1,5 +1,4 @@
-import { fetchAndParseXML, getDetails } from "./utils.mjs";
-
+import { fetchXML, parseXML } from "./utils.mjs"; // Adjust the import path as necessary
 const btnSearch = document.getElementById("btnSearch");
 const workOrderNo = document.getElementById("workOrderNo"); // Assuming this is the input field for Work Order No
 
@@ -30,15 +29,10 @@ btnSearch.addEventListener("click", async function (event) {
       return;
     }
 
-    const table = document.createElement("table");
-    table.id = "xmlTable"; // Set an ID for the table if needed
-    // table.border = "1";
-
     const cert = { lines: [] }; // Initialize the cert object with an empty lines array
-
-    details.forEach((detail) => {
+    for (const detail of details) {
       const sections = detail.querySelectorAll("Section");
-      sections.forEach((section) => {
+      sections.forEach(async (section) => {
         const line = {}; // Create a new line object for each section
 
         const fields = section.querySelectorAll("Field");
@@ -59,179 +53,82 @@ btnSearch.addEventListener("click", async function (event) {
         certno = certno.replace(/^0+/, "");
         // if length is 5 or less, push to cert.lines array
         if (certno.length <= 5) {
-          line["SERIALNUMBER1"] = certno;
-          cert.lines.push(line);
-          return; // Skip to the next section
+          cert.lines.push(certno);
         } else {
-          // push to lookup array
-          cert.lookup = cert.lookup || []; // Initialize lookup array if not already done
-          cert.lookup.push(line);
-        }
-      });
-    });
+          // console.log("Cert No is greater than 5 characters:", certno);
+          let childWoNoValue = certno.substring(0, 6); // Update childWoNoValue with the new certno
+          // console.log("Child Work Order No:", childWoNoValue); // Log the child work order number for debugging
+          let childNo = certno.substring(7, 10); // Get the child number from the certno
+          // console.log("Child No:", childNo); // Log the child number for debugging
 
-    // console.log("Cert Object:", cert.lines);
-    console.log("Cert Object:", cert);
-    // log all of the unique lines[SERIALNUMBER1] in cert.lines
-    // const uniqueLines = cert.lines.reduce((acc, line) => {
-    //   let certno = line["SERIALNUMBER1"];
-    //   if (certno) {
-    //     certno = certno.trim(); // Ensure consistent formatting
-    //     if (!acc.includes(certno)) {
-    //       acc.push(certno);
-    //     }
-    //   }
-    //   return acc;
-    // }, []);
-    // console.log("Unique Lines:", uniqueLines);
+          // Function to process XML and extract matching SERIALNUMBER1 values
+          async function processChildXML(childWoNoValue, childNo) {
+            const childXmlResponse = await fetchXML(childWoNoValue);
+            const childParsedData = parseXML(childXmlResponse);
 
-    const lookupsDetails = { lines: [] };
-    // For each line in cert.lookup, get cert data from the workorder
-    cert.lookup.forEach((line) => {
-      let childWoNo = line["SERIALNUMBER1"];
-      let lookupCertNo = childWoNo.substring(0, 6); // Get the first 6 characters of the certno
-      let lookupCertNoChild = childWoNo.substring(
-        childWoNo.length - 3,
-        childWoNo.length
-      );
-      //   console.log("Lookup Cert No:", lookupCertNo);
-      //   console.log("Lookup Cert No Child:", lookupCertNoChild);
-      // Fetch the cert data using the lookupCertNo
-      fetchXML(lookupCertNo)
-        .then((lookupResponse) => {
-          const lookupParsedData = parseXML(lookupResponse);
-          // Handle the lookup parsed data here
-          //   console.log("Lookup Parsed Data:", lookupParsedData);
-          const lookupCrystalReport =
-            lookupParsedData.querySelector("CrystalReport");
-          if (!lookupCrystalReport) {
-            console.error(
-              "CrystalReport element not found in the lookup parsed data."
-            );
-            return;
-          }
-          const lookupDetails = lookupCrystalReport.querySelectorAll("Details");
-          if (!lookupDetails.length) {
-            console.error(
-              "No Details elements found in the lookup CrystalReport."
-            );
-            return;
-          }
-          lookupDetails.forEach((lookupDetail) => {
-            const lookupSections = lookupDetail.querySelectorAll("Section");
-            lookupSections.forEach((lookupSection) => {
-              const lookupLine = {}; // Create a new line object for each section
+            const childCrystalReport = childParsedData.querySelector("CrystalReport");
+            if (!childCrystalReport) {
+              console.error("Child CrystalReport element not found in the parsed data.");
+              return [];
+            }
 
-              const lookupFields = lookupSection.querySelectorAll("Field");
-              lookupFields.forEach((lookupField) => {
-                const name = lookupField.getAttribute("Name");
-                const formattedValue =
-                  lookupField.querySelector("FormattedValue");
-                const value = formattedValue
-                  ? formattedValue.textContent
-                  : "N/A";
+            const childDetails = childCrystalReport.querySelectorAll("Details");
+            if (!childDetails.length) {
+              console.error("No Details elements found in the child CrystalReport.");
+              return [];
+            }
 
-                // Add the field to the line object
-                if (name) {
-                  lookupLine[name] = value;
-                }
-              });
-              let certno = lookupLine["SERIALNUMBER1"];
-              // replace 'PO: ' with '' in certno
-              certno = certno.replace("PO: ", "");
-              // replace preceding zeros in certno
-              certno = certno.replace(/^0+/, "");
-              // if length is 5 or less, push to lookupsDetails.lines array
-              if (certno.length <= 5) {
-                lookupLine["SERIALNUMBER1"] = certno; // Update the certno in the line object
-                // Check if a similar line already exists in lookupsDetails.lines (ignoring QUANTITY1)
-                const isDuplicate = lookupsDetails.lines.some(
-                  (existingLine) => {
-                    return Object.keys(lookupLine).every((key) => {
-                      if (key === "QUANTITY1") return true; // Ignore QUANTITY1 field
-                      return existingLine[key] === lookupLine[key];
-                    });
+            const matchingSerialNumbers = []; // Initialize an array to store matching SERIALNUMBER1 values
+            for (const childDetail of childDetails) {
+              const childSections = childDetail.querySelectorAll("Section");
+              for (const childSection of childSections) {
+                const childFields = childSection.querySelectorAll("Field");
+                let serialNumber = null;
+                let suffix = null;
+
+                for (const childField of childFields) {
+                  const name = childField.getAttribute("Name");
+                  const formattedValue = childField.querySelector("FormattedValue");
+                  const value = formattedValue ? formattedValue.textContent : "N/A";
+
+                  if (name === "SERIALNUMBER1") {
+                    serialNumber = value;
+                  } else if (name === "SUFFIX1") {
+                    suffix = value;
                   }
-                );
+                }
 
-                // If not a duplicate, push the line to lookupsDetails.lines
-                if (!isDuplicate) {
-                  lookupsDetails.lines.push(lookupLine);
-                  cert.lines.push(lookupLine); // Add to cert.lines as well
+                // Check if SUFFIX1 matches childNo
+                if (suffix === childNo && serialNumber) {
+                  // Replace 'PO: ' with '' in serialNumber
+                  serialNumber = serialNumber.replace("PO: ", "");
+                  // Replace preceding zeros in serialNumber
+                  serialNumber = serialNumber.replace(/^0+/, "");
+                  matchingSerialNumbers.push(serialNumber);
                 }
               }
-            });
-          });
-        })
-        .catch((error) => {
-          console.error("Error fetching or parsing lookup XML:", error);
-        });
-    });
+            }
 
-    // //   log all of the unique lines[SERIALNUMBER1] in cert.lines
-    // const uniqueLines = cert.lines.reduce((acc, line) => {
-    //   const certno = line["SERIALNUMBER1"];
-    //   if (!acc.includes(certno)) {
-    //     acc.push(certno);
-    //   }
-    //   return acc;
-    // }, []);
-    // console.log("Unique Lines:", uniqueLines);
+            return matchingSerialNumbers;
+          }
 
-    // console.log("Lines:", cert.lines);
-    // Create a table from cert.lines and append it to the document
-    const tableHeaders = Object.keys(cert.lines[0] || {}); // Get the headers from the first line
-
-    if (tableHeaders.length > 0) {
-      // Create the table header row
-      const headerRow = document.createElement("tr");
-      tableHeaders.forEach((header) => {
-        const th = document.createElement("th");
-        th.textContent = header;
-        headerRow.appendChild(th);
+          // Use the refactored function
+          const matchingSerialNumbers = await processChildXML(childWoNoValue, childNo);
+          // console.log("Matching SERIALNUMBER1 values:", matchingSerialNumbers);
+          // Add the matching serial numbers to the cert.lines array if they are not already present
+          matchingSerialNumbers.forEach((serialNumber) => {
+            if (!cert.lines.includes(serialNumber)) {
+              cert.lines.push(serialNumber);
+            } else {
+              // console.log("Duplicate SERIALNUMBER1 found:", serialNumber);
+              return;
+            }
+          });                   
+        }
       });
-
-      table.appendChild(headerRow);
-
-      // Create the table rows for each line
-      cert.lines.forEach((line) => {
-        const row = document.createElement("tr");
-        tableHeaders.forEach((header) => {
-          const td = document.createElement("td");
-          td.textContent = line[header] || ""; // Fill with empty string if value is missing
-          row.appendChild(td);
-        });
-        table.appendChild(row);
-      });
-
-      // Append the table to the document body or a specific container
-      const container = document.getElementById("tableContainer") || document.body;
-      container.appendChild(table);
-    } else {
-      console.error("No data available to create the table.");
     }
-
-
+    console.log("Cert Lines:", cert.lines); // Log the cert lines for debugging
   } catch (error) {
     console.error("Error fetching or parsing XML:", error);
-  }
-
-  // Helper functions
-  async function fetchXML(workOrderNo) {
-    const response = await fetch(`/data/${workOrderNo}.xml`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch XML: ${response.statusText}`);
-    }
-    return await response.text();
-  }
-
-  function parseXML(xmlString) {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-    const parseError = xmlDoc.querySelector("parsererror");
-    if (parseError) {
-      throw new Error("Error parsing XML");
-    }
-    return xmlDoc;
   }
 });

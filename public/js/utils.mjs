@@ -116,7 +116,7 @@ export async function getCertNos(childWorkOrderNoValue) {
 }
 
 // Helper functions
-async function fetchXML(workOrderNo) {
+export async function fetchXML(workOrderNo) {
   const response = await fetch(`/data/${workOrderNo}.xml`);
   if (!response.ok) {
     throw new Error(`Failed to fetch XML: ${response.statusText}`);
@@ -124,7 +124,7 @@ async function fetchXML(workOrderNo) {
   return await response.text();
 }
 
-function parseXML(xmlString) {
+export function parseXML(xmlString) {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlString, "application/xml");
     const parseError = xmlDoc.querySelector("parsererror");
