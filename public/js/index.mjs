@@ -180,7 +180,7 @@ btnSearch.addEventListener("click", async function (event) {
       uniqueCertNos.add(certno); // Add certno to the Set
     }
     const certNosString = Array.from(uniqueCertNos).join(" "); // Convert Set to string with spaces
-    console.log(certNosString); // Log the result
+    // console.log(certNosString); // Log the result
     uniqueCerts.textContent = certNosString; // Display the unique cert numbers in the element
     
   } catch (error) {
@@ -191,6 +191,9 @@ btnSearch.addEventListener("click", async function (event) {
 const btnPrintCerts = document.getElementById("btnPrintCerts");
 
 btnPrintCerts.addEventListener("click", async function () {
+  // alert("Not done yet!"); // Placeholder for the print functionality
+  // return; // Exit the function if not done yet
+
   const uniqueCerts = document.getElementById("uniqueCerts").textContent.trim();
   if (!uniqueCerts) {
     console.error("No unique certs found to print.");
@@ -200,10 +203,17 @@ btnPrintCerts.addEventListener("click", async function () {
   const certNumbers = uniqueCerts.split(" ");
 
   for (const certNumber of certNumbers) {
-    const pdfPath = `K:\Scans\Material, Process Certs/${certNumber}.pdf`;
+    const pdfPath = `http://FS1.CI.local/Common/Scans/Material_Process_Certs/${certNumber}.pdf`;
+    console.log(`PDF Path: ${pdfPath}`); // Log the PDF path for debugging
     try {
-      const response = await fetch(pdfPath);
+      const response = await fetch(pdfPath, { method: "HEAD" }); // Use HEAD to check if the file exists
       if (!response.ok) {
+        console.error(`PDF not found for cert number: ${certNumber} (HTTP ${response.status})`);
+        continue;
+      }cd
+
+      const pdfResponse = await fetch(pdfPath); // Fetch the actual PDF if it exists
+      if (!pdfResponse.ok) {
         console.error(`Failed to fetch PDF for cert number: ${certNumber}`);
         continue;
       }
