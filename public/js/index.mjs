@@ -32,20 +32,20 @@ btnSearch.addEventListener("click", async function (event) {
     const cert = { lines: [] }; // Initialize the cert object with an empty lines array
     for (const detail of details) {
       const sections = detail.querySelectorAll("Section");
-      sections.forEach(async (section) => {
+      for (const section of sections) {
         const line = {}; // Create a new line object for each section
-
+      
         const fields = section.querySelectorAll("Field");
-        fields.forEach((field) => {
+        for (const field of fields) {
           const name = field.getAttribute("Name");
           const formattedValue = field.querySelector("FormattedValue");
           const value = formattedValue ? formattedValue.textContent : "N/A";
-
+      
           // Add the field to the line object
           if (name) {
             line[name] = value;
           }
-        });
+        }
         let certno = line["SERIALNUMBER1"];
         // replace 'PO: ' with '' in certno
         certno = certno.replace("PO: ", "");
@@ -53,13 +53,25 @@ btnSearch.addEventListener("click", async function (event) {
         certno = certno.replace(/^0+/, "");
         // if length is 5 or less, push to cert.lines array
         if (certno.length <= 5) {
-          cert.lines.push(certno);
+          line["SERIALNUMBER1"] = certno; // Update the certno in the line object
+            cert.lines.push(line);
         } else {
-          // console.log("Cert No is greater than 5 characters:", certno);
+
+
+
+
+
+
+
+
+
+
+
+
+
           let childWoNoValue = certno.substring(0, 6); // Update childWoNoValue with the new certno
-          // console.log("Child Work Order No:", childWoNoValue); // Log the child work order number for debugging
           let childNo = certno.substring(7, 10); // Get the child number from the certno
-          // console.log("Child No:", childNo); // Log the child number for debugging
+          // console.log("Looking for:", childWoNoValue + '/' + childNo);
 
           // Function to process XML and extract matching SERIALNUMBER1 values
           async function processChildXML(childWoNoValue, childNo) {
@@ -82,40 +94,35 @@ btnSearch.addEventListener("click", async function (event) {
             for (const childDetail of childDetails) {
               const childSections = childDetail.querySelectorAll("Section");
               for (const childSection of childSections) {
+                const childLine = {}; // Create a new line object for each section
                 const childFields = childSection.querySelectorAll("Field");
-                let serialNumber = null;
-                let suffix = null;
 
                 for (const childField of childFields) {
                   const name = childField.getAttribute("Name");
                   const formattedValue = childField.querySelector("FormattedValue");
                   const value = formattedValue ? formattedValue.textContent : "N/A";
 
-                  if (name === "SERIALNUMBER1") {
-                    serialNumber = value;
-                  } else if (name === "SUFFIX1") {
-                    suffix = value;
+                  if (name) {
+                    childLine[name] = value; // Add the field to the line object
                   }
                 }
+                let thisChildJob = childLine["JOB1"]
+                let thisChildSuffix = childLine["SUFFIX1"]
 
-                // Check if SUFFIX1 matches childNo
-                if (suffix === childNo && serialNumber) {
-                  // Replace 'PO: ' with '' in serialNumber
+                if ((thisChildSuffix === childNo) && (childWoNoValue === thisChildJob)) {
+                  let serialNumber = childLine["SERIALNUMBER1"]; // Update the certno in the line object
                   serialNumber = serialNumber.replace("PO: ", "");
-                  // Replace preceding zeros in serialNumber
                   serialNumber = serialNumber.replace(/^0+/, "");
-                  matchingSerialNumbers.push(serialNumber);
+                  childLine["SERIALNUMBER1"] = serialNumber; // Update the certno in the line object
+
+                  matchingSerialNumbers.push(childLine);
                 }
               }
             }
-
             return matchingSerialNumbers;
           }
 
-          // Use the refactored function
           const matchingSerialNumbers = await processChildXML(childWoNoValue, childNo);
-          // console.log("Matching SERIALNUMBER1 values:", matchingSerialNumbers);
-          // Add the matching serial numbers to the cert.lines array if they are not already present
           matchingSerialNumbers.forEach((serialNumber) => {
             if (!cert.lines.includes(serialNumber)) {
               cert.lines.push(serialNumber);
@@ -125,10 +132,96 @@ btnSearch.addEventListener("click", async function (event) {
             }
           });                   
         }
-      });
+      }
     }
-    console.log("Cert Lines:", cert.lines); // Log the cert lines for debugging
+    // console.log("Cert Lines:", cert.lines); // Log the cert lines for debugging
+    const searchResults = document.getElementById("searchResults");
+    searchResults.innerHTML = ""; // Clear previous results
+
+    // Create a table element
+    const table = document.createElement("table");
+    table.className = "results-table"; // Add a class for styling
+
+    // Create the table header
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    if (cert.lines.length > 0) {
+      const keys = Object.keys(cert.lines[0]); // Get the keys from the first line
+      for (const key of keys) {
+      const th = document.createElement("th");
+      th.textContent = key; // Set the header text
+      headerRow.appendChild(th);
+      }
+    }
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Create the table body
+    const tbody = document.createElement("tbody");
+    for (const line of cert.lines) {
+      const row = document.createElement("tr");
+      for (const value of Object.values(line)) {
+      const cell = document.createElement("td");
+      cell.textContent = value; // Set the cell text
+      row.appendChild(cell);
+      }
+      tbody.appendChild(row);
+    }
+    table.appendChild(tbody);
+
+    // Append the table to the results container
+    searchResults.appendChild(table);
+  
+    const uniqueCerts = document.getElementById("uniqueCerts");
+    uniqueCerts.innerHTML = ""; // Clear previous results
+    const uniqueCertNos = new Set(); // Use a Set to store unique cert numbers
+    for (const line of cert.lines) {
+      const certno = line["SERIALNUMBER1"];
+      uniqueCertNos.add(certno); // Add certno to the Set
+    }
+    const certNosString = Array.from(uniqueCertNos).join(" "); // Convert Set to string with spaces
+    console.log(certNosString); // Log the result
+    uniqueCerts.textContent = certNosString; // Display the unique cert numbers in the element
+    
   } catch (error) {
     console.error("Error fetching or parsing XML:", error);
+  }
+});
+
+const btnPrintCerts = document.getElementById("btnPrintCerts");
+
+btnPrintCerts.addEventListener("click", async function () {
+  const uniqueCerts = document.getElementById("uniqueCerts").textContent.trim();
+  if (!uniqueCerts) {
+    console.error("No unique certs found to print.");
+    return;
+  }
+
+  const certNumbers = uniqueCerts.split(" ");
+
+  for (const certNumber of certNumbers) {
+    const pdfPath = `K:\Scans\Material, Process Certs/${certNumber}.pdf`;
+    try {
+      const response = await fetch(pdfPath);
+      if (!response.ok) {
+        console.error(`Failed to fetch PDF for cert number: ${certNumber}`);
+        continue;
+      }
+
+      const blob = await response.blob();
+      const pdfUrl = URL.createObjectURL(blob);
+
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = pdfUrl;
+      document.body.appendChild(iframe);
+
+      iframe.onload = function () {
+        iframe.contentWindow.print();
+        document.body.removeChild(iframe); // Clean up after printing
+      };
+    } catch (error) {
+      console.error(`Error printing PDF for cert number: ${certNumber}`, error);
+    }
   }
 });

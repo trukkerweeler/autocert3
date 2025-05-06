@@ -8,7 +8,7 @@
 </head>
 <body>
     <header>
-        <h1>Make Summary Cert</h1>
+        <h1>Print Certs</h1>
     </header>
     <main>
         <div id="searchForm">
@@ -16,14 +16,20 @@
             <input type="text" id="workOrderNo" name="workOrderNo" value="122198">
             <button type="submit" id="btnSearch">Search</button>
         </div>
-        <div id="searchResult" style="display: none;">
-            <h2>Search Result</h2>
-            <p id="resultText"></p>
-            <button id="btnClose">Close</button>
+        <div>
+            <table id="xmlTable"></table>
+        </div>
+        <div id="searchResults">
+        </div>
+        <div>
+            <p id="uniqueCerts"></p>
+        </div>
+        <div>
+            <button id="btnPrintCerts">Print Certs</button>
         </div>
     </main>
     <footer>
-        <p>&copy; 2023 My Website</p>
+        <p>&copy; 2025 My Website</p>
     </footer>
 </body>
 <script type="module" src="/js/index.mjs"></script>
